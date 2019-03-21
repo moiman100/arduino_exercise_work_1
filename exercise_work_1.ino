@@ -48,40 +48,16 @@ void wake() {
   car_state = start;
 }
 
-void read_input() {
-  // Check pin 4
-  if (!(PIND & (1 << PD4))) {
-    car_state = stopp;
-  } else {
-    if (!(PIND & (1 << PD7))) {
-      // When entering brake state, save the last state so that we can later return to it
-      // Only if last state isn't brake so that it doesn't loop to brake
-      if (car_state != brake) {
-        last_state = car_state;
-      }
-      car_state = brake;
-    } else if (!(PIND & (1 << PD3))) {
-      car_state = start;
-    } else if (!(PIND & (1 << PD5))) {
-      if (car_state == start) {
-        car_state = forward;
-      }
-    } else if (!(PIND & (1 << PD6))) {
-      if (car_state == start) {
-        car_state = reverse;
-      }
-    } else if (car_state == brake) {
-      // When brake is released return to last state
-      car_state = last_state;
-    }
+void drive() {
+  if (!(PIND & (1 << PD3))) {
+    // Start button
+    car_state = start;
   }
-}
-
-void spin_fan() {
   analogWrite(motor_pwm_pin, analogRead(pot_pin) / 4);
 }
 
-void switch_output() {
+// This controls LEDs and motor direction
+void handle_output() {
   int bit_number;
   // Turn all outputs off
   PORTB &= B11001000;
@@ -95,8 +71,20 @@ void switch_output() {
 }
 
 void loop() {
-  read_input();
-  switch_output();
+  if (!(PIND & (1 << PD4))) {
+    // Stop button
+    car_state = stopp;
+  } else if (!(PIND & (1 << PD7))) {
+    // Brake button
+    // When entering brake state, save the last state so that we can later return to it
+    // Only if last state isn't brake so that it doesn't loop to brake
+    if (car_state != brake) {
+      last_state = car_state;
+    }
+    car_state = brake;
+  }
+
+  handle_output();
 
   switch (car_state) {
     case stopp:
@@ -112,19 +100,35 @@ void loop() {
       sleep_cpu();
       sleep_disable();
       break;
+
     case start:
       Serial.println("Start");
+      if (!(PIND & (1 << PD5))) {
+        // Forward button
+        car_state = forward;
+      } else if (!(PIND & (1 << PD6))) {
+        // Reverse button
+        car_state = reverse;
+      }
       break;
+
     case forward:
       Serial.println("Forward");
-      spin_fan();
+      drive();
       break;
+
     case reverse:
       Serial.println("Reverse");
-      spin_fan();
+      drive();
       break;
+
     case brake:
       Serial.println("Brake");
+      // When brake is released return to last state
+      if (PIND & (1 << PD7)) {
+      	// Brake button
+        car_state = last_state;
+      }
       break;
   }
 }
