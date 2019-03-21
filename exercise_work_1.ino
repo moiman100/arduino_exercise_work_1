@@ -94,6 +94,7 @@ void loop() {
 
   switch (car_state) {
     case stopp:
+      Serial.println("Stop");
       // Set arduino to sleep
       sleep_enable();
       attachInterrupt(digitalPinToInterrupt(start_pin), wake, LOW); // Start button interrupts sleep
@@ -106,14 +107,18 @@ void loop() {
       sleep_disable();
       break;
     case start:
+      Serial.println("Start");
       break;
     case forward:
+      Serial.println("Forward");
       spin_fan();
       break;
     case reverse:
+      Serial.println("Reverse");
       spin_fan();
       break;
     case brake:
+      Serial.println("Brake");
       break;
   }
 }
