@@ -60,10 +60,16 @@ void read_input() {
         last_state = car_state;
       }
       car_state = brake;
+    } else if (!(PIND & (1 << PD3))) {
+      car_state = start;
     } else if (!(PIND & (1 << PD5))) {
-      car_state = forward;
+      if (car_state == start) {
+        car_state = forward;
+      }
     } else if (!(PIND & (1 << PD6))) {
-      car_state = reverse;
+      if (car_state == start) {
+        car_state = reverse;
+      }
     } else if (car_state == brake) {
       // When brake is released return to last state
       car_state = last_state;
